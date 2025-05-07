@@ -1,0 +1,75 @@
+:root {
+    --primary: #4e73df;
+    --secondary: #858796;
+    --success: #1cc88a;
+    --info: #36b9cc;
+    --warning: #f6c23e;
+    --danger: #e74a3b;
+    --light: #f8f9fc;
+    --dark: #5a5c69;
+  }
+  
+  body {
+    background-color: #f8f9fc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .navbar {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  }
+  
+  .card {
+    border: none;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+  }
+  
+  .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    font-weight: 600;
+  }
+  
+  .table th {
+    background-color: #f8f9fc;
+    border-bottom: 2px solid #e3e6f0;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .form-control, .form-select {
+    border-radius: 0.35rem;
+    border: 1px solid #d1d3e2;
+  }
+  
+  .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+  }
+  
+  .btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+  }
+  
+  .dashboard-card {
+    border-left: 0.25rem solid;
+    border-radius: 0.35rem;
+  }
+  
+  .dashboard-card.primary {
+    border-left-color: var(--primary);
+  }
+  
+  .dashboard-card.success {
+    border-left-color: var(--success);
+  }
+  
+  .dashboard-card.warning {
+    border-left-color: var(--warning);
+  }
+  
+  .login-container {
+    max-width: 450px;
+  }
