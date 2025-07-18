@@ -2,122 +2,142 @@
 require '../includes/config.php';
 require '../includes/auth.php';
 
-// Debugging - remove after testing
-// echo "<pre>"; print_r($_SESSION); echo "</pre>"; 
+// Only admin can access this page
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: login.php");
+    exit();
+}
 
-$page_title = "Add New Staff";
+$errors = [];
+$success = '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = $conn->real_escape_string($_POST['name']);
-    $email = $conn->real_escape_string($_POST['email']);
-    $password = $conn->real_escape_string($_POST['password']);
-    $role = 'staff'; // Default role for added users
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+    $role = $_POST['role'];
     
-    // Check if email already exists
-    $check = $conn->query("SELECT id FROM users WHERE email = '$email'");
+    // Validation
+    if (empty($name)) $errors[] = "Name is required";
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email is required";
+    if (strlen($password) < 8) $errors[] = "Password must be at least 8 characters";
+    if ($password !== $confirm_password) $errors[] = "Passwords don't match";
+    if (!in_array($role, ['admin', 'staff'])) $errors[] = "Invalid role selected";
     
-    if ($check->num_rows > 0) {
-        $_SESSION['error'] = "Email already exists!";
-    } else {
-        $conn->query("
-            INSERT INTO users (name, email, password, role)
-            VALUES ('$name', '$email', '$password', '$role')
-        ");
+    // Check if email exists
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
+    
+    if ($stmt->num_rows > 0) {
+        $errors[] = "Email already registered";
+    }
+    $stmt->close();
+    
+    // If no errors, create user
+    if (empty($errors)) {
+        $hashed_password = hashPassword($password);
         
-        $_SESSION['success'] = "Staff member added successfully!";
-        header("Location: manage_users.php");
-        exit();
+        $stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $name, $email, $hashed_password, $role);
+        
+        if ($stmt->execute()) {
+            $success = "User created successfully!";
+            $name = $email = ''; // Clear form
+        } else {
+            $errors[] = "User creation failed: " . $conn->error;
+        }
+        $stmt->close();
     }
 }
 ?>
 
 <?php require '../includes/header.php'; ?>
-
-<div class="card shadow">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Add New Staff Member</h6>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User | Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border-radius: 10px; }
+        .form-control:focus { box-shadow: none; border-color: #80bdff; }
+    </style>
+</head>
+<body>
+  
+    
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Add New User</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <?php if (!empty($errors)): ?>
+                            <div class="alert alert-danger">
+                                <?php foreach ($errors as $error): ?>
+                                    <p class="mb-1"><?= htmlspecialchars($error) ?></p>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($success): ?>
+                            <div class="alert alert-success">
+                                <?= htmlspecialchars($success) ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <form method="POST" novalidate>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" name="name" class="form-control" 
+                                           value="<?= htmlspecialchars($name ?? '') ?>" required>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" name="email" class="form-control" 
+                                           value="<?= htmlspecialchars($email ?? '') ?>" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Password (min 8 chars)</label>
+                                    <input type="password" name="password" class="form-control" required>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" name="confirm_password" class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Role</label>
+                                <select name="role" class="form-select" required>
+                                    <option value="">Select Role</option>
+                                    <option value="admin" <?= (isset($role) && $role === 'admin') ? 'selected' : '' ?>>Admin</option>
+                                    <option value="staff" <?= (isset($role) && $role === 'staff') ? 'selected' : '' ?>>Staff</option>
+                                </select>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="users.php" class="btn btn-outline-secondary">Back to Users</a>
+                                <button type="submit" class="btn btn-primary">Create User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <?= $_SESSION['error'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            <?php unset($_SESSION['error']); ?>
-        <?php endif; ?>
-
-        <form method="POST" class="needs-validation" novalidate>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" name="name" required>
-                    <div class="invalid-feedback">Please enter staff member's name</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-control" name="email" required>
-                    <div class="invalid-feedback">Please enter a valid email</div>
-                </div>
-            </div>
-            
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" required>
-                    <div class="invalid-feedback">Please enter a password</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Confirm Password</label>
-                    <input type="password" class="form-control" name="confirm_password" required>
-                    <div class="invalid-feedback">Please confirm password</div>
-                </div>
-            </div>
-            
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <a href="manage_users.php" class="btn btn-secondary me-md-2">
-                    <i class="bi bi-x-circle me-1"></i> Cancel
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save me-1"></i> Add Staff
-                </button>
-            </div>
-            </form>
-    </div>
-</div>
-
-<script>
-// Password confirmation validation
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const password = document.querySelector('input[name="password"]');
-    const confirmPassword = document.querySelector('input[name="confirm_password"]');
-    
-    form.addEventListener('submit', function(e) {
-        if (password.value !== confirmPassword.value) {
-            e.preventDefault();
-            confirmPassword.setCustomValidity("Passwords don't match");
-            confirmPassword.classList.add('is-invalid');
-        } else {
-            confirmPassword.setCustomValidity('');
-        }
-    });
-    
-    password.addEventListener('input', function() {
-        if (password.value !== confirmPassword.value) {
-            confirmPassword.setCustomValidity("Passwords don't match");
-        } else {
-            confirmPassword.setCustomValidity('');
-        }
-    });
-    
-    confirmPassword.addEventListener('input', function() {
-        if (password.value !== confirmPassword.value) {
-            this.setCustomValidity("Passwords don't match");
-        } else {
-            this.setCustomValidity('');
-        }
-    });
-});
-</script>
-
-<?php require '../includes/footer.php'; ?>
+</body>
+</html>

@@ -9,7 +9,7 @@ $user_id = $_SESSION['user_id'];
 $today_sales = $conn->query("
     SELECT COUNT(*) as count, SUM(sale_price) as total 
     FROM sales 
-    WHERE sold_by = $user_id AND DATE(sale_date) = CURDATE()
+    WHERE DATE(sale_date) = CURDATE()
 ")->fetch_assoc();
 ?>
 

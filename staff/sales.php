@@ -5,26 +5,32 @@ require '../includes/auth.php';
 $page_title = "Record Sale";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $phone_id = (int)$_POST['phone_id'];
+    $phone_id = (int) $_POST['phone_id'];
     $customer_name = $conn->real_escape_string($_POST['customer_name']);
     $customer_phone = $conn->real_escape_string($_POST['customer_phone']);
-    $sale_price = (float)$_POST['sale_price'];
-    
+    $sale_price = (float) str_replace(',', '', $_POST['sale_price']);
+    $amount_paid = (float) str_replace(',', '', $_POST['amount_paid']);
+
     $conn->begin_transaction();
-    
+
     try {
-        // Insert sale record
-        $conn->query("
-            INSERT INTO sales (phone_id, customer_name, customer_phone, sale_price, sold_by)
-            VALUES ($phone_id, '$customer_name', '$customer_phone', $sale_price, {$_SESSION['user_id']})
-        ");
+        $stmt = $conn->prepare("INSERT INTO sales (phone_id, customer_name, customer_phone, sale_price, amount_paid, sold_by) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("issddi", $phone_id, $customer_name, $customer_phone, $sale_price, $amount_paid, $_SESSION['user_id']);
         
-        // Update phone quantity
+        if (!$stmt->execute()) {
+            throw new Exception("Insert failed: " . $stmt->error);
+        }
+
+        // Get the last inserted sale ID
+        $sale_id = $conn->insert_id;
+
+        // Update the phone quantity
         $conn->query("UPDATE phones SET quantity = quantity - 1 WHERE id = $phone_id");
-        
+
         $conn->commit();
-        $_SESSION['success'] = "Sale recorded successfully!";
-        header("Location: sales.php");
+
+        // Redirect to success page with the sale ID
+        header("Location: /phone_sales_system/sale_success.php?sale_id=$sale_id");
         exit();
     } catch (Exception $e) {
         $conn->rollback();
@@ -50,7 +56,7 @@ $phones = $conn->query("SELECT * FROM phones WHERE quantity > 0");
             </div>
             <?php unset($_SESSION['error']); ?>
         <?php endif; ?>
-        
+
         <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success alert-dismissible fade show">
                 <?= $_SESSION['success'] ?>
@@ -59,27 +65,39 @@ $phones = $conn->query("SELECT * FROM phones WHERE quantity > 0");
             <?php unset($_SESSION['success']); ?>
         <?php endif; ?>
 
-        <form method="POST" class="needs-validation" novalidate>
+        <form id="saleForm" method="POST" class="needs-validation" novalidate>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Select Phone</label>
                     <select name="phone_id" class="form-select" required>
                         <option value="">-- Select Phone --</option>
-                        <?php while($phone = $phones->fetch_assoc()): ?>
-                        <option value="<?= $phone['id'] ?>" data-price="<?= $phone['price'] ?>">
-                            <?= $phone['brand'] ?> <?= $phone['model'] ?> - $<?= number_format($phone['price'], 2) ?>
-                        </option>
+                        <?php while ($phone = $phones->fetch_assoc()): ?>
+                            <option value="<?= $phone['id'] ?>" data-price="<?= number_format($phone['price']) ?>">
+                                <?= $phone['brand'] ?> <?= $phone['model'] ?> - UGX <?= number_format($phone['price']) ?>
+                            </option>
                         <?php endwhile; ?>
                     </select>
                     <div class="invalid-feedback">Please select a phone</div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Sale Price ($)</label>
-                    <input type="number" name="sale_price" class="form-control" step="0.01" min="0" required>
+                    <label class="form-label">Selling Price (UGX)</label>
+                    <input type="text" name="sale_price" id="sale_price" class="form-control formatted" required>
                     <div class="invalid-feedback">Please enter sale price</div>
                 </div>
             </div>
-            
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Amount Paid (UGX)</label>
+                    <input type="text" name="amount_paid" id="amount_paid" class="form-control formatted" required>
+                    <div class="invalid-feedback">Please enter amount paid</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Balance Due</label>
+                    <input type="text" id="balance_due" class="form-control bg-light" readonly>
+                </div>
+            </div>
+
             <div class="row mb-4">
                 <div class="col-md-6">
                     <label class="form-label">Customer Name</label>
@@ -92,26 +110,87 @@ $phones = $conn->query("SELECT * FROM phones WHERE quantity > 0");
                     <div class="invalid-feedback">Please enter customer phone</div>
                 </div>
             </div>
-            
-            <button type="submit" class="btn btn-primary">
+
+            <button type="button" class="btn btn-primary" id="previewButton">
+                <i class="bi bi-eye me-1"></i> Preview Sale
+            </button>
+            <button type="submit" class="btn btn-success" style="display: none;" id="recordSaleButton">
                 <i class="bi bi-cash-stack me-1"></i> Record Sale
             </button>
         </form>
     </div>
 </div>
 
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Sale Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Phone:</strong> <span id="previewPhone"></span></p>
+                <p><strong>Selling Price:</strong> <span id="previewSalePrice"></span></p>
+                <p><strong>Amount Paid:</strong> <span id="previewAmountPaid"></span></p>
+                <p><strong>Balance Due:</strong> <span id="previewBalanceDue"></span></p>
+                <p><strong>Customer Name:</strong> <span id="previewCustomerName"></span></p>
+                <p><strong>Customer Phone:</strong> <span id="previewCustomerPhone"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="confirmSaleButton">Confirm Sale</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const phoneSelect = document.querySelector('select[name="phone_id"]');
-    const priceInput = document.querySelector('input[name="sale_price"]');
-    
-    phoneSelect.addEventListener('change', function() {
-        if (this.value) {
-            const selectedOption = this.options[this.selectedIndex];
-            priceInput.value = selectedOption.dataset.price;
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        const phoneSelect = document.querySelector('select[name="phone_id"]');
+        const priceInput = document.getElementById('sale_price');
+        const paidInput = document.getElementById('amount_paid');
+        const balanceDisplay = document.getElementById('balance_due');
+
+        const format = num => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        const unformat = str => str.replace(/,/g, '');
+
+        phoneSelect.addEventListener('change', function () {
+            if (this.value) {
+                const selectedOption = this.options[this.selectedIndex];
+                priceInput.value = selectedOption.dataset.price;
+                priceInput.dispatchEvent(new Event('input'));
+            }
+        });
+
+        [priceInput, paidInput].forEach(el => {
+            el.addEventListener('input', function () {
+                this.value = format(unformat(this.value));
+                const price = parseFloat(unformat(priceInput.value)) || 0;
+                const paid = parseFloat(unformat(paidInput.value)) || 0;
+                const balance = price - paid;
+                balanceDisplay.value = 'UGX ' + format(balance);
+            });
+        });
+
+        document.getElementById('previewButton').addEventListener('click', function () {
+            const selectedPhone = phoneSelect.options[phoneSelect.selectedIndex];
+            document.getElementById('previewPhone').innerText = selectedPhone.textContent;
+            document.getElementById('previewSalePrice').innerText = priceInput.value;
+            document.getElementById('previewAmountPaid').innerText = paidInput.value;
+            document.getElementById('previewBalanceDue').innerText = balanceDisplay.value;
+            document.getElementById('previewCustomerName').innerText = document.querySelector('input[name="customer_name"]').value;
+            document.getElementById('previewCustomerPhone').innerText = document.querySelector('input[name="customer_phone"]').value;
+
+            // Show the modal
+            var myModal = new bootstrap.Modal(document.getElementById('previewModal'));
+            myModal.show();
+        });
+
+        document.getElementById('confirmSaleButton').addEventListener('click', function () {
+            document.getElementById('recordSaleButton').click();
+        });
     });
-});
 </script>
 
 <?php require '../includes/footer.php'; ?>
