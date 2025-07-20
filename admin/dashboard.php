@@ -7,15 +7,15 @@ $page_title = "Admin Dashboard";
 // Stats with status check
 $stats = $conn->query("
     SELECT 
-        (SELECT COUNT(*) FROM phones WHERE status != 'sold') as phone_count,
+        (SELECT COUNT(*) FROM phones WHERE status != 'sold' AND quantity != '0') as phone_count,
         (SELECT COUNT(*) FROM sales WHERE DATE(sale_date) = CURDATE()) as today_sales,
         (SELECT COUNT(*) FROM returns WHERE status = 'Repairing') as pending_returns,
         (SELECT SUM(sale_price) FROM sales WHERE MONTH(sale_date) = MONTH(CURRENT_DATE())) as monthly_revenue
 ")->fetch_assoc();
 
 // Pagination for recent sales
-$limit_recent = 12; 
-$page_recent = isset($_GET['page_recent']) ? (int)$_GET['page_recent'] : 1;
+$limit_recent = 12;
+$page_recent = isset($_GET['page_recent']) ? (int) $_GET['page_recent'] : 1;
 $offset_recent = ($page_recent - 1) * $limit_recent;
 
 $total_recent_sales = $conn->query("SELECT COUNT(*) as total FROM sales")->fetch_assoc()['total'];
@@ -30,33 +30,33 @@ $recent_sales = $conn->query("
 ");
 
 // Pagination for available phones
-$limit_available = 10; 
-$page_available = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit_available = 10;
+$page_available = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset_available = ($page_available - 1) * $limit_available;
 
-$total_phones = $conn->query("SELECT COUNT(*) AS total FROM phones WHERE status != 'sold'")->fetch_assoc()['total'];
+$total_phones = $conn->query("SELECT COUNT(*) AS total FROM phones WHERE status != 'sold' AND quantity != '0'")->fetch_assoc()['total'];
 $total_pages_available = ceil($total_phones / $limit_available);
 
 $available_phones = $conn->query("
     SELECT * FROM phones 
     WHERE status != 'sold'
-    AND quantity > 0
+    AND quantity != 0
     ORDER BY added_at DESC
     LIMIT $limit_available OFFSET $offset_available
 ");
 
 // Pagination for today's sales
 $limit_today_sales = 10;
-$page_today_sales = isset($_GET['page_today']) ? (int)$_GET['page_today'] : 1;
+$page_today_sales = isset($_GET['page_today']) ? (int) $_GET['page_today'] : 1;
 $offset_today_sales = ($page_today_sales - 1) * $limit_today_sales;
 
 $today_sales_details = $conn->query("
-    SELECT s.*, p.brand, p.model 
-    FROM sales s
-    JOIN phones p ON s.phone_id = p.id
-    WHERE DATE(s.sale_date) = CURDATE()
-    ORDER BY s.sale_date DESC
-    LIMIT $limit_today_sales OFFSET $offset_today_sales
+SELECT s.*, p.brand, p.model 
+FROM sales s
+JOIN phones p ON s.phone_id = p.id
+WHERE DATE(s.sale_date) = CURDATE() 
+ORDER BY s.sale_date DESC
+LIMIT $limit_today_sales OFFSET $offset_today_sales
 ");
 
 // Show daily breakdown of current month sales if requested
@@ -306,20 +306,20 @@ require '../includes/header.php';
                     <table class="table table-bordered table-hover">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <!-- <th>ID</th> -->
                                 <th>Phone</th>
                                 <th>Customer</th>
-                                <th>Amount (UGX)</th>
+                                <th>Amount Paid (UGX)</th>
                                 <th>Sale Time</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while ($row = $today_sales_details->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?= $row['id'] ?></td>
+                                    <!-- <td><?= $row['id'] ?></td> -->
                                     <td><?= $row['brand'] . ' ' . $row['model'] ?></td>
                                     <td><?= $row['customer_name'] ?></td>
-                                    <td>UGX <?= number_format($row['sale_price']) ?></td>
+                                    <td>UGX <?= number_format($row['amount_paid']) ?></td>
                                     <td><?= date('H:i:s', strtotime($row['sale_date'])) ?></td>
                                 </tr>
                             <?php endwhile; ?>
@@ -364,7 +364,7 @@ require '../includes/header.php';
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <!-- <th>ID</th> -->
                         <th>Phone</th>
                         <th>Customer</th>
                         <th>Amount</th>
@@ -374,8 +374,8 @@ require '../includes/header.php';
                 <tbody>
                     <?php while ($sale = $recent_sales->fetch_assoc()): ?>
                         <tr>
-                            <td><?= $sale['id'] ?></td>
-                            <td><?= $sale['brand'] ?> <?= $sale['model'] ?></td>
+                            <!-- <td><?= $sale['id'] ?></td> -->
+                            <td><?= $sale['brand'] ?>     <?= $sale['model'] ?></td>
                             <td><?= $sale['customer_name'] ?></td>
                             <td>UGX <?= number_format($sale['sale_price']) ?></td>
                             <td><?= date('M d, Y', strtotime($sale['sale_date'])) ?></td>

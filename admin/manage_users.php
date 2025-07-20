@@ -2,7 +2,6 @@
 require '../includes/config.php';
 require '../includes/auth.php';
 
-// Verify admin access
 if ($_SESSION['role'] !== 'admin') {
     header("Location: ../errors/403.php");
     exit();
@@ -10,14 +9,26 @@ if ($_SESSION['role'] !== 'admin') {
 
 $page_title = "Manage Users";
 
-// Get all users (both admin and staff)
-$users = $conn->query("
-    SELECT * FROM users 
-    ORDER BY created_at DESC
-");
+// Get all users
+$users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
 ?>
 
 <?php require '../includes/header.php'; ?>
+
+<!-- Success & Error Alerts -->
+<?php if (isset($_GET['success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($_GET['success']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($_GET['error']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
 
 <div class="card shadow">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -56,8 +67,8 @@ $users = $conn->query("
                                 <i class="bi bi-pencil"></i> Edit
                             </a>
                             <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                            <a href="delete_user.php?id=<?= $user['id'] ?>" 
-                               class="btn btn-sm btn-danger" 
+                            <a href="delete_user.php?id=<?= $user['id'] ?>"
+                               class="btn btn-sm btn-danger"
                                onclick="return confirm('Are you sure you want to delete this user?')">
                                 <i class="bi bi-trash"></i> Delete
                             </a>
