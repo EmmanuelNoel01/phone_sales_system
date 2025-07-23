@@ -93,14 +93,16 @@ if (session_status() === PHP_SESSION_NONE)
             <a href="/phone_sales_system/admin/dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
             <a href="/phone_sales_system/admin/add_phone.php"><i class="bi bi-plus-circle"></i> Add Phone</a>
             <a href="/phone_sales_system/admin/manage_users.php"><i class="bi bi-people"></i> Manage Staff</a>
-            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i> Sales</a>
+            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i>Sell Phones</a>
+            <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i>Sell other Gadgets</a>
             <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> Returns</a>
             <a href="/phone_sales_system/staff/swaps.php"><i class="bi bi-arrow-left-right"></i> Swaps(Top-Up)</a>
             <a href="/phone_sales_system/staff/swaps_debtors.php"><i class="bi bi-exclamation-circle"></i> Swap Debtors</a>
             <a href="/phone_sales_system/staff/sales_debtors.php"><i class="bi bi-exclamation-triangle"></i> Sales Debtors</a>
             <a href="/phone_sales_system/expenditures.php"><i class="bi bi-cash-stack"></i> Expenditure</a>
         <?php else: ?>
-            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i> Sales</a>
+            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i>Sell Phones</a>
+            <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i>Sell other Gadgets</a>
             <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> Returns</a>
             <a href="/phone_sales_system/staff/swaps.php"><i class="bi bi-arrow-left-right"></i> Swaps(Top-Up)</a>
             <a href="/phone_sales_system/staff/swaps_debtors.php"><i class="bi bi-exclamation-circle"></i> Swap Debtors</a>

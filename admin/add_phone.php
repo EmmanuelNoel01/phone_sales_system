@@ -25,11 +25,12 @@ if (isset($_POST['import_csv'])) {
         while (($row = fgetcsv($file)) !== false) {
             if (count($row) < 8) continue;
 
-            [$brand, $model, $imei, $storage, $color, $condition, $price, $quantity] = $row;
+            [$brand, $model, $imei, $storage, $color, $condition, $ignored_price, $ignored_quantity] = $row;
 
             $imei = trim($imei);
-            $price = (int)str_replace([',', 'UGX', 'ugx', ' '], '', $price);
-            $quantity = (int)$quantity;
+            // Ignore price and quantity from CSV, always set:
+            $price = 0;
+            $quantity = 1;
 
             // Validate duplicate IMEI
             $check = $conn->query("SELECT id FROM phones WHERE imei = '$imei'");
@@ -72,12 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['brand'])) {
     $storage = trim($conn->real_escape_string($_POST['storage']));
     $color = trim($conn->real_escape_string($_POST['color']));
     $condition = trim($conn->real_escape_string($_POST['condition']));
-    $price = (int)str_replace(',', '', $_POST['price']);
-    $quantity = (int)$_POST['quantity'];
+    $price = 0;  // Default 0
+    $quantity = 1; // Default 1
 
     if (
         empty($brand) || empty($model) || empty($imei) || empty($storage) ||
-        empty($color) || empty($condition) || $price <= 0 || $quantity < 1
+        empty($color) || empty($condition)
     ) {
         $_SESSION['error'] = "Please fill in all fields correctly.";
         header("Location: add_phone.php");
@@ -176,18 +177,7 @@ require '../includes/header.php';
                 </div>
             </div>
 
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">Price (UGX)</label>
-                    <input type="text" class="form-control" name="price" pattern="^[0-9,]+$" required placeholder="e.g. 1,500,000">
-                    <div class="invalid-feedback">Please enter price using numbers and commas</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Quantity</label>
-                    <input type="number" min="1" class="form-control" name="quantity" value="1" required>
-                    <div class="invalid-feedback">Please enter quantity</div>
-                </div>
-            </div>
+            <!-- Removed price and quantity inputs from UI -->
 
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-save me-1"></i> Add Phone

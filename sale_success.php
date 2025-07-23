@@ -9,12 +9,18 @@ if ($sale_id <= 0) {
 
 // Fetch sale details
 $stmt = $conn->prepare("
-    SELECT s.id, s.customer_name, s.customer_phone, s.sale_price, s.amount_paid, s.sale_date, p.brand, p.model, u.role
-    FROM sales s 
-    JOIN phones p ON s.phone_id = p.id 
+    SELECT 
+        s.id, s.customer_name, s.customer_phone, s.sale_price, s.amount_paid, s.sale_date, 
+        p.brand AS phone_brand, p.model AS phone_model,
+        g.name AS gadget_name, g.model AS gadget_model,
+        u.role
+    FROM sales s
+    LEFT JOIN phones p ON s.phone_id = p.id
+    LEFT JOIN gadgets g ON s.gadget_id = g.id
     JOIN users u ON s.sold_by = u.id
     WHERE s.id = ?
 ");
+
 
 if (!$stmt) {
     die("Failed to prepare statement: " . $conn->error);
@@ -145,7 +151,7 @@ $balance = $sale['sale_price'] - $sale['amount_paid'];
 <body onload="printAndRedirect()">
   <div class="receipt-container">
     <div class="logo">
-      <img src="/phone_sales_system/assets/img/logo.png" alt="Shop Logo" />
+      <img src="/phone_sales_system/assets/img/logo.jpg" alt="Shop Logo" />
     </div>
 
     <div class="header-grid">
@@ -161,7 +167,7 @@ $balance = $sale['sale_price'] - $sale['amount_paid'];
       </div>
     </div>
 
-    <div class="receipt-title">Phone Sales Receipt</div>
+    <div class="receipt-title">Sales Receipt</div>
 
     <table class="sale-details">
       <tr>
@@ -172,10 +178,25 @@ $balance = $sale['sale_price'] - $sale['amount_paid'];
         <th>Sale Time</th>
         <td><?= date('H:i:s', strtotime($sale['sale_date'])) ?></td>
       </tr>
-      <tr>
+      <!-- <tr>
         <th>Phone</th>
         <td><?= htmlspecialchars($sale['brand']) . ' ' . htmlspecialchars($sale['model']) ?></td>
-      </tr>
+      </tr> -->
+      <tr>
+  <th>Item Sold</th>
+  <td>
+    <?php 
+    if ($sale['phone_brand']) {
+        echo htmlspecialchars($sale['phone_brand']) . ' ' . htmlspecialchars($sale['phone_model']);
+    } elseif ($sale['gadget_name']) {
+        echo htmlspecialchars($sale['gadget_name']) . ' ' . htmlspecialchars($sale['gadget_model']);
+    } else {
+        echo "Unknown Item";
+    }
+    ?>
+  </td>
+</tr>
+
       <tr>
         <th>Total Price</th>
         <td class="amount">UGX <?= number_format($sale['sale_price']) ?></td>
@@ -202,10 +223,25 @@ $balance = $sale['sale_price'] - $sale['amount_paid'];
   <script>
 function printAndRedirect() {
   window.print();
-  setTimeout(function() {
-    window.location.href = '/phone_sales_system/staff/sales.php';
+
+  const params = new URLSearchParams(window.location.search);
+  const from = params.get("from"); 
+  console.log("Current path:", params);
+  
+  let targetUrl;
+
+  if (from && from.includes('sell_gadget.php')) {
+    targetUrl = '/phone_sales_system/sell_gadget.php';
+  } else {
+    targetUrl = '/phone_sales_system/staff/sales.php';
+  }
+
+  setTimeout(function () {
+    window.location.href = targetUrl;
   }, 5000);
 }
+
+
 </script>
 
 </body>

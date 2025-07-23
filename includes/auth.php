@@ -39,7 +39,10 @@ $admin_pages = [
     'sale_success.php',
     'debt_approval.php',
     'swap_approval.php',
-    'sales_debtors.php'
+    'sales_debtors.php',
+    'upload_gadget.php',
+    'sell_gadget.php',
+    'gadgets_list.php'
 ];
 
 $staff_pages = [
@@ -51,7 +54,8 @@ $staff_pages = [
     'expenditures.php',
     'print_receipt.php',
     'sale_success.php',
-    'sales_debtors.php'
+    'sales_debtors.php',
+    'sell_gadget.php'
 ];
 
 // Get current page (handle subdirectories)

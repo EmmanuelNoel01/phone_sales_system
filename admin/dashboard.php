@@ -51,13 +51,23 @@ $page_today_sales = isset($_GET['page_today']) ? (int) $_GET['page_today'] : 1;
 $offset_today_sales = ($page_today_sales - 1) * $limit_today_sales;
 
 $today_sales_details = $conn->query("
-SELECT s.*, p.brand, p.model 
+SELECT 
+    s.amount_paid,
+    s.sale_date,
+    s.customer_name,
+    CASE 
+        WHEN s.phone_id IS NOT NULL THEN CONCAT(p.brand, ' ', p.model)
+        WHEN s.gadget_id IS NOT NULL THEN g.name
+        ELSE 'Unknown Product'
+    END AS product_name
 FROM sales s
-JOIN phones p ON s.phone_id = p.id
-WHERE DATE(s.sale_date) = CURDATE() 
+LEFT JOIN phones p ON s.phone_id = p.id
+LEFT JOIN gadgets g ON s.gadget_id = g.id
+WHERE DATE(s.sale_date) = CURDATE()
 ORDER BY s.sale_date DESC
 LIMIT $limit_today_sales OFFSET $offset_today_sales
 ");
+
 
 // Show daily breakdown of current month sales if requested
 $show_monthly_breakdown = isset($_GET['show']) && $_GET['show'] === 'monthly_breakdown';
@@ -186,6 +196,29 @@ require '../includes/header.php';
             </div>
         </a>
     </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+    <a href="upload_gadget.php" style="text-decoration: none; color: inherit;">
+        <div class="card dashboard-card danger h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="text-uppercase text-dark mb-0">Upload other Gadgets</h6>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-receipt text-sky-blue" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+
+<style>
+    .text-sky-blue {
+        color: #87CEEB;
+    }
+</style>
 </div>
 
 <!-- AVAILABLE PHONES -->
@@ -306,20 +339,20 @@ require '../includes/header.php';
                     <table class="table table-bordered table-hover">
                         <thead>
                             <tr>
-                                <!-- <th>ID</th> -->
-                                <th>Phone</th>
-                                <th>Customer</th>
+                                <th>product_name</th>
+                                <!-- <th>Phone</th> -->
                                 <th>Amount Paid (UGX)</th>
+                                <th>Customer</th>
                                 <th>Sale Time</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while ($row = $today_sales_details->fetch_assoc()): ?>
                                 <tr>
-                                    <!-- <td><?= $row['id'] ?></td> -->
-                                    <td><?= $row['brand'] . ' ' . $row['model'] ?></td>
-                                    <td><?= $row['customer_name'] ?></td>
+                                    <td><?= $row['product_name'] ?></td>
+                                    <!-- <td><?= $row['brand'] . ' ' . $row['model'] ?></td> -->
                                     <td>UGX <?= number_format($row['amount_paid']) ?></td>
+                                    <td><?= $row['customer_name'] ?></td>
                                     <td><?= date('H:i:s', strtotime($row['sale_date'])) ?></td>
                                 </tr>
                             <?php endwhile; ?>
@@ -354,7 +387,7 @@ require '../includes/header.php';
 <?php endif; ?>
 
 <!-- RECENT SALES -->
-<div class="card shadow mt-4">
+<!-- <div class="card shadow mt-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Recent Sales</h6>
         <a href="#" class="btn btn-sm btn-primary">View All</a>
@@ -365,43 +398,43 @@ require '../includes/header.php';
                 <thead>
                     <tr>
                         <!-- <th>ID</th> -->
-                        <th>Phone</th>
+                        <!-- <th>Phone</th>
                         <th>Customer</th>
                         <th>Amount</th>
                         <th>Date</th>
-                    </tr>
-                </thead>
+                    </tr> -->
+                <!-- </thead>
                 <tbody>
                     <?php while ($sale = $recent_sales->fetch_assoc()): ?>
-                        <tr>
-                            <!-- <td><?= $sale['id'] ?></td> -->
+                        <tr> -->
+                             <!-- <td><?= $sale['id'] ?></td>
                             <td><?= $sale['brand'] ?>     <?= $sale['model'] ?></td>
                             <td><?= $sale['customer_name'] ?></td>
-                            <td>UGX <?= number_format($sale['sale_price']) ?></td>
-                            <td><?= date('M d, Y', strtotime($sale['sale_date'])) ?></td>
+                            <td>UGX <?= number_format($sale['sale_price']) ?></td> -->
+                            <!-- <td><?= date('M d, Y', strtotime($sale['sale_date'])) ?></td>
                         </tr>
                     <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
+                </tbody> -->
+            <!-- </table>
+        </div> -->
 
         <!-- Pagination Controls for Recent Sales -->
-        <nav aria-label="Page navigation">
+        <!-- <nav aria-label="Page navigation">
             <ul class="pagination">
                 <li class="page-item <?= $page_recent <= 1 ? 'disabled' : '' ?>">
                     <a class="page-link" href="?page_recent=<?= $page_recent - 1 ?>">Previous</a>
-                </li>
-                <?php for ($i = 1; $i <= $total_pages_recent; $i++): ?>
+                </li> -->
+                <!-- <?php for ($i = 1; $i <= $total_pages_recent; $i++): ?>
                     <li class="page-item <?= $i === $page_recent ? 'active' : '' ?>">
                         <a class="page-link" href="?page_recent=<?= $i ?>"><?= $i ?></a>
                     </li>
-                <?php endfor; ?>
-                <li class="page-item <?= $page_recent >= $total_pages_recent ? 'disabled' : '' ?>">
+                <?php endfor; ?> -->
+                <!-- <li class="page-item <?= $page_recent >= $total_pages_recent ? 'disabled' : '' ?>">
                     <a class="page-link" href="?page_recent=<?= $page_recent + 1 ?>">Next</a>
                 </li>
             </ul>
-        </nav>
-    </div>
-</div>
+        </nav> -->
+    <!-- </div>
+</div>  -->
 
 <?php require '../includes/footer.php'; ?>
