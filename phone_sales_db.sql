@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Jul 20, 2025 at 04:28 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- Host: localhost
+-- Generation Time: Jul 23, 2025 at 06:22 PM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.2.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -50,6 +50,31 @@ INSERT INTO `expenditures` (`id`, `title`, `amount`, `category`, `description`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `gadgets`
+--
+
+CREATE TABLE `gadgets` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `serial_number` varchar(255) DEFAULT NULL,
+  `specifications` text DEFAULT NULL,
+  `price` int(11) DEFAULT 0,
+  `quantity` int(11) DEFAULT 1,
+  `added_by` int(11) DEFAULT NULL,
+  `added_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `gadgets`
+--
+
+INSERT INTO `gadgets` (`id`, `name`, `model`, `serial_number`, `specifications`, `price`, `quantity`, `added_by`, `added_at`) VALUES
+(1, 'lightening cable', '', '', '3 m;', 20000, 16, 119, '2025-07-22 04:47:35');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `phones`
 --
 
@@ -73,7 +98,7 @@ CREATE TABLE `phones` (
 --
 
 INSERT INTO `phones` (`id`, `brand`, `model`, `imei`, `storage`, `color`, `condition`, `price`, `quantity`, `added_by`, `added_at`, `status`) VALUES
-(1, 'Apple', 'iPhone 13', '123456789012345', '128GB', 'Blue', 'New', 1150000.00, 43, NULL, '2025-05-07 04:49:05', 'Returned'),
+(1, 'Apple', 'iPhone 13', '123456789012345', '128GB', 'Blue', 'New', 1150000.00, 39, NULL, '2025-05-07 04:49:05', 'Returned'),
 (2, 'Samsung', 'Galaxy S22', '234567890123456', '256GB', 'Black', 'New', 3500000.00, 0, NULL, '2025-05-07 04:49:05', 'Available'),
 (3, 'Google', 'Pixel 6', '345678901234567', '128GB', 'White', 'Refurbished', 2800000.00, 0, NULL, '2025-05-07 04:49:05', 'Available');
 
@@ -109,54 +134,74 @@ CREATE TABLE `sales` (
   `sale_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `amount_paid` decimal(10,2) DEFAULT 0.00,
   `balance_due` decimal(10,2) GENERATED ALWAYS AS (`sale_price` - `amount_paid`) STORED,
-  `approval_status` enum('Pending','Approved','Rejected') DEFAULT 'Pending'
+  `approval_status` enum('Pending','Approved','Rejected') DEFAULT 'Pending',
+  `gadget_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `phone_id`, `customer_name`, `customer_phone`, `sale_price`, `sold_by`, `sale_date`, `amount_paid`, `approval_status`) VALUES
-(1, 2, 'Walk-in Customer', '0778485512', 899.00, 118, '2025-07-12 14:27:35', 899.00, 'Approved'),
-(2, 1, 'Walk-in Customer', '0778485512', 1050000.00, 118, '2025-07-12 18:52:29', 1050000.00, 'Approved'),
-(3, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-17 09:19:03', 1150000.00, 'Approved'),
-(4, 1, 'Walk-in Customer', '0778485512', 1150000.00, 118, '2025-07-17 11:52:11', 1150000.00, 'Approved'),
-(5, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:12:35', 1000000.00, 'Pending'),
-(6, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:16:48', 1000000.00, 'Pending'),
-(7, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-17 17:17:08', 1000000.00, 'Pending'),
-(8, 3, 'Walk-in Customer', '0778485512', 2800000.00, 119, '2025-07-17 17:19:31', 1000000.00, 'Pending'),
-(9, 2, 'Walk-in Customer', '0778485512', 3500000.00, 119, '2025-07-17 17:21:22', 4000000.00, 'Pending'),
-(10, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-17 17:26:21', 1000000.00, 'Pending'),
-(11, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:29:07', 1150000.00, 'Pending'),
-(12, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:30:06', 1150000.00, 'Pending'),
-(13, 1, 'Walk-in Custo', '0778485512', 1150000.00, 119, '2025-07-17 17:31:47', 1150000.00, 'Pending'),
-(14, 3, 'Walk-in Customer', '0778485512', 2800000.00, 119, '2025-07-17 17:35:11', 2800000.00, 'Pending'),
-(15, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:37:14', 3500000.00, 'Pending'),
-(16, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:40:26', 3500000.00, 'Pending'),
-(17, 3, 'noel', '0778485512', 2800000.00, 119, '2025-07-17 17:41:55', 2800000.00, 'Pending'),
-(18, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:43:10', 3500000.00, 'Pending'),
-(19, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:46:00', 3500000.00, 'Pending'),
-(20, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:50:56', 3500000.00, 'Pending'),
-(21, 3, 'noel', '0778485512', 2800000.00, 119, '2025-07-17 17:53:37', 2800000.00, 'Pending'),
-(22, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 18:08:22', 3500000.00, 'Pending'),
-(23, 3, 'noel', '0778485512', 2800000.00, 119, '2025-07-17 18:13:21', 2800000.00, 'Pending'),
-(24, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:15:33', 1150000.00, 'Pending'),
-(25, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:17:19', 1150000.00, 'Pending'),
-(26, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:19:13', 1150000.00, 'Pending'),
-(27, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:21:26', 1150000.00, 'Pending'),
-(28, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:26:49', 1150000.00, 'Pending'),
-(29, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:29:12', 1150000.00, 'Pending'),
-(30, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:30:41', 1150000.00, 'Pending'),
-(31, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:34:06', 1150000.00, 'Pending'),
-(32, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:36:24', 1150000.00, 'Pending'),
-(33, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:39:03', 1150000.00, 'Pending'),
-(34, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:41:45', 1150000.00, 'Pending'),
-(35, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:44:45', 1150000.00, 'Pending'),
-(36, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:47:54', 1150000.00, 'Pending'),
-(37, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:50:55', 1150000.00, 'Pending'),
-(38, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:53:59', 1150000.00, 'Pending'),
-(39, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:55:04', 1150000.00, 'Pending'),
-(40, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-18 17:49:54', 1150000.00, 'Approved');
+INSERT INTO `sales` (`id`, `phone_id`, `customer_name`, `customer_phone`, `sale_price`, `sold_by`, `sale_date`, `amount_paid`, `approval_status`, `gadget_id`) VALUES
+(1, 2, 'Walk-in Customer', '0778485512', 899.00, 118, '2025-07-12 14:27:35', 899.00, 'Approved', NULL),
+(2, 1, 'Walk-in Customer', '0778485512', 1050000.00, 118, '2025-07-12 18:52:29', 1050000.00, 'Approved', NULL),
+(3, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-17 09:19:03', 1150000.00, 'Approved', NULL),
+(4, 1, 'Walk-in Customer', '0778485512', 1150000.00, 118, '2025-07-17 11:52:11', 1150000.00, 'Approved', NULL),
+(5, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:12:35', 1000000.00, 'Pending', NULL),
+(6, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:16:48', 1000000.00, 'Pending', NULL),
+(7, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-17 17:17:08', 1000000.00, 'Pending', NULL),
+(8, 3, 'Walk-in Customer', '0778485512', 2800000.00, 119, '2025-07-17 17:19:31', 1000000.00, 'Pending', NULL),
+(9, 2, 'Walk-in Customer', '0778485512', 3500000.00, 119, '2025-07-17 17:21:22', 4000000.00, 'Pending', NULL),
+(10, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-17 17:26:21', 1000000.00, 'Pending', NULL),
+(11, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:29:07', 1150000.00, 'Pending', NULL),
+(12, 1, 'xxxxxx', '0778485512', 1150000.00, 119, '2025-07-17 17:30:06', 1150000.00, 'Pending', NULL),
+(13, 1, 'Walk-in Custo', '0778485512', 1150000.00, 119, '2025-07-17 17:31:47', 1150000.00, 'Pending', NULL),
+(14, 3, 'Walk-in Customer', '0778485512', 2800000.00, 119, '2025-07-17 17:35:11', 2800000.00, 'Pending', NULL),
+(15, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:37:14', 3500000.00, 'Pending', NULL),
+(16, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:40:26', 3500000.00, 'Pending', NULL),
+(17, 3, 'noel', '0778485512', 2800000.00, 119, '2025-07-17 17:41:55', 2800000.00, 'Pending', NULL),
+(18, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:43:10', 3500000.00, 'Pending', NULL),
+(19, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:46:00', 3500000.00, 'Pending', NULL),
+(20, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 17:50:56', 3500000.00, 'Pending', NULL),
+(21, 3, 'noel', '0778485512', 2800000.00, 119, '2025-07-17 17:53:37', 2800000.00, 'Pending', NULL),
+(22, 2, 'noel', '0778485512', 3500000.00, 119, '2025-07-17 18:08:22', 3500000.00, 'Pending', NULL),
+(23, 3, 'noel', '0778485512', 2800000.00, 119, '2025-07-17 18:13:21', 2800000.00, 'Pending', NULL),
+(24, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:15:33', 1150000.00, 'Pending', NULL),
+(25, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:17:19', 1150000.00, 'Pending', NULL),
+(26, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:19:13', 1150000.00, 'Pending', NULL),
+(27, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:21:26', 1150000.00, 'Pending', NULL),
+(28, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:26:49', 1150000.00, 'Pending', NULL),
+(29, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:29:12', 1150000.00, 'Pending', NULL),
+(30, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:30:41', 1150000.00, 'Pending', NULL),
+(31, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:34:06', 1150000.00, 'Pending', NULL),
+(32, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:36:24', 1150000.00, 'Pending', NULL),
+(33, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:39:03', 1150000.00, 'Pending', NULL),
+(34, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:41:45', 1150000.00, 'Pending', NULL),
+(35, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:44:45', 1150000.00, 'Pending', NULL),
+(36, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:47:54', 1150000.00, 'Pending', NULL),
+(37, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:50:55', 1150000.00, 'Pending', NULL),
+(38, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:53:59', 1150000.00, 'Pending', NULL),
+(39, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-17 18:55:04', 1150000.00, 'Pending', NULL),
+(40, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-18 17:49:54', 1150000.00, 'Approved', NULL),
+(41, 1, 'phillipo', '0778485512', 1150000.00, 119, '2025-07-20 17:34:28', 2800000.00, 'Pending', NULL),
+(42, 1, 'noel', '0778485512', 1150000.00, 119, '2025-07-20 17:35:45', 1150000.00, 'Pending', NULL),
+(43, 1, 'phillipo', '0778485512', 1150000.00, 119, '2025-07-20 17:36:44', 1150000.00, 'Pending', NULL),
+(44, 1, 'phillipo', '0778485512', 1150000.00, 119, '2025-07-22 05:04:38', 1150000.00, 'Pending', NULL),
+(45, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 06:50:51', 20000.00, 'Approved', 1),
+(46, NULL, 'phillipo', '0778485512', 20000.00, 119, '2025-07-22 07:09:25', 20000.00, 'Pending', 1),
+(47, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:15:20', 20000.00, 'Pending', 1),
+(48, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:25:08', 20000.00, 'Pending', 1),
+(49, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:27:08', 20000.00, 'Pending', 1),
+(50, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:50:39', 20000.00, 'Pending', 1),
+(51, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:55:41', 20000.00, 'Pending', 1),
+(52, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:56:33', 20000.00, 'Pending', 1),
+(53, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 07:58:06', 20000.00, 'Pending', 1),
+(54, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:00:27', 20000.00, 'Pending', 1),
+(55, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:04:32', 20000.00, 'Pending', 1),
+(56, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:13:24', 20000.00, 'Pending', 1),
+(57, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:08', 20000.00, 'Pending', 1),
+(58, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:32', 20000.00, 'Pending', 1),
+(59, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:59', 20000.00, 'Pending', 1);
 
 -- --------------------------------------------------------
 
@@ -227,6 +272,13 @@ ALTER TABLE `expenditures`
   ADD KEY `added_by` (`added_by`);
 
 --
+-- Indexes for table `gadgets`
+--
+ALTER TABLE `gadgets`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `serial_number` (`serial_number`);
+
+--
 -- Indexes for table `phones`
 --
 ALTER TABLE `phones`
@@ -249,7 +301,8 @@ ALTER TABLE `returns`
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`id`),
   ADD KEY `phone_id` (`phone_id`),
-  ADD KEY `sales_ibfk_2` (`sold_by`);
+  ADD KEY `sales_ibfk_2` (`sold_by`),
+  ADD KEY `sales_ibfk_3` (`gadget_id`);
 
 --
 -- Indexes for table `swaps`
@@ -279,6 +332,12 @@ ALTER TABLE `expenditures`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `gadgets`
+--
+ALTER TABLE `gadgets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `phones`
 --
 ALTER TABLE `phones`
@@ -294,7 +353,7 @@ ALTER TABLE `returns`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `swaps`
@@ -337,7 +396,8 @@ ALTER TABLE `returns`
 --
 ALTER TABLE `sales`
   ADD CONSTRAINT `sales_ibfk_1` FOREIGN KEY (`phone_id`) REFERENCES `phones` (`id`),
-  ADD CONSTRAINT `sales_ibfk_2` FOREIGN KEY (`sold_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `sales_ibfk_2` FOREIGN KEY (`sold_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sales_ibfk_3` FOREIGN KEY (`gadget_id`) REFERENCES `gadgets` (`id`);
 
 --
 -- Constraints for table `swaps`
