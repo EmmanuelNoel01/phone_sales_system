@@ -42,7 +42,8 @@ $admin_pages = [
     'sales_debtors.php',
     'upload_gadget.php',
     'sell_gadget.php',
-    'gadgets_list.php'
+    'gadgets_list.php',
+    'manage_inventory.php'
 ];
 
 $staff_pages = [

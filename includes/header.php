@@ -93,6 +93,7 @@ if (session_status() === PHP_SESSION_NONE)
             <a href="/phone_sales_system/admin/dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
             <a href="/phone_sales_system/admin/add_phone.php"><i class="bi bi-plus-circle"></i> Add Phone</a>
             <a href="/phone_sales_system/admin/manage_users.php"><i class="bi bi-people"></i> Manage Staff</a>
+            <a href="/phone_sales_system/admin/manage_inventory.php"><i class="bi bi-pencil"></i> Edit Inventory</a>
             <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i>Sell Phones</a>
             <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i>Sell other Gadgets</a>
             <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> Returns</a>

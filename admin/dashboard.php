@@ -14,7 +14,7 @@ $stats = $conn->query("
 ")->fetch_assoc();
 
 // Pagination for recent sales
-$limit_recent = 12;
+$limit_recent = 30;
 $page_recent = isset($_GET['page_recent']) ? (int) $_GET['page_recent'] : 1;
 $offset_recent = ($page_recent - 1) * $limit_recent;
 
@@ -30,7 +30,7 @@ $recent_sales = $conn->query("
 ");
 
 // Pagination for available phones
-$limit_available = 10;
+$limit_available = 30;
 $page_available = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset_available = ($page_available - 1) * $limit_available;
 
@@ -46,27 +46,49 @@ $available_phones = $conn->query("
 ");
 
 // Pagination for today's sales
-$limit_today_sales = 10;
+$limit_today_sales = 30;
 $page_today_sales = isset($_GET['page_today']) ? (int) $_GET['page_today'] : 1;
 $offset_today_sales = ($page_today_sales - 1) * $limit_today_sales;
 
+$from_date = isset($_GET['from_date']) ? $_GET['from_date'] : '';
+$to_date = isset($_GET['to_date']) ? $_GET['to_date'] : '';
+
+$where_clause = "";
+if ($from_date && $to_date) {
+    $where_clause = "WHERE DATE(s.sale_date) BETWEEN '$from_date' AND '$to_date'";
+} elseif ($from_date) {
+    $where_clause = "WHERE DATE(s.sale_date) >= '$from_date'";
+} elseif ($to_date) {
+    $where_clause = "WHERE DATE(s.sale_date) <= '$to_date'";
+} else {
+    $where_clause = "WHERE DATE(s.sale_date) = CURDATE()";
+}
+
 $today_sales_details = $conn->query("
-SELECT 
-    s.amount_paid,
-    s.sale_date,
-    s.customer_name,
-    CASE 
-        WHEN s.phone_id IS NOT NULL THEN CONCAT(p.brand, ' ', p.model)
-        WHEN s.gadget_id IS NOT NULL THEN g.name
-        ELSE 'Unknown Product'
-    END AS product_name
-FROM sales s
-LEFT JOIN phones p ON s.phone_id = p.id
-LEFT JOIN gadgets g ON s.gadget_id = g.id
-WHERE DATE(s.sale_date) = CURDATE()
-ORDER BY s.sale_date DESC
-LIMIT $limit_today_sales OFFSET $offset_today_sales
+    SELECT 
+        s.amount_paid,
+        s.sale_date,
+        s.customer_name,
+        CASE 
+            WHEN s.phone_id IS NOT NULL THEN CONCAT(p.brand, ' ', p.model)
+            WHEN s.gadget_id IS NOT NULL THEN g.name
+            ELSE 'Unknown Product'
+        END AS product_name
+    FROM sales s
+    LEFT JOIN phones p ON s.phone_id = p.id
+    LEFT JOIN gadgets g ON s.gadget_id = g.id
+    $where_clause
+    ORDER BY s.sale_date DESC
+    LIMIT $limit_today_sales OFFSET $offset_today_sales
 ");
+
+// For pagination total count
+$total_today_sales = $conn->query("
+    SELECT COUNT(*) as total 
+    FROM sales s 
+    $where_clause
+")->fetch_assoc()['total'];
+$total_pages_today = ceil($total_today_sales / $limit_today_sales);
 
 
 // Show daily breakdown of current month sales if requested
@@ -198,27 +220,27 @@ require '../includes/header.php';
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-    <a href="upload_gadget.php" style="text-decoration: none; color: inherit;">
-        <div class="card dashboard-card danger h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h6 class="text-uppercase text-dark mb-0">Upload other Gadgets</h6>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-receipt text-sky-blue" style="font-size: 24px;"></i>
+        <a href="upload_gadget.php" style="text-decoration: none; color: inherit;">
+            <div class="card dashboard-card danger h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-uppercase text-dark mb-0">Upload other Gadgets</h6>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-receipt text-sky-blue" style="font-size: 24px;"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </a>
-</div>
+        </a>
+    </div>
 
-<style>
-    .text-sky-blue {
-        color: #87CEEB;
-    }
-</style>
+    <style>
+        .text-sky-blue {
+            color: #87CEEB;
+        }
+    </style>
 </div>
 
 <!-- AVAILABLE PHONES -->
@@ -334,6 +356,20 @@ require '../includes/header.php';
             <a href="dashboard.php" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
         </div>
         <div class="card-body">
+            <form method="get" class="row mb-3">
+                <input type="hidden" name="show" value="today_sales">
+                <div class="col-md-3">
+                    <input type="date" name="from_date" value="<?= $_GET['from_date'] ?? '' ?>" class="form-control" placeholder="From Date">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" name="to_date" value="<?= $_GET['to_date'] ?? '' ?>" class="form-control" placeholder="To Date">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-sm btn-success">Filter</button>
+                    <a href="?show=today_sales" class="btn btn-sm btn-secondary">Reset</a>
+                </div>
+            </form>
+
             <?php if ($today_sales_details->num_rows > 0): ?>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover">
@@ -371,7 +407,7 @@ require '../includes/header.php';
                         $total_pages_today = ceil($total_today_sales / $limit_today_sales);
                         for ($i = 1; $i <= $total_pages_today; $i++): ?>
                             <li class="page-item <?= $i === $page_today_sales ? 'active' : '' ?>">
-                                <a class="page-link" href="?show=today_sales&page_today=<?= $i ?>"><?= $i ?></a>
+                                <a class="page-link" href="?show=today_sales&page_today=<?= $i ?>&from_date=<?= $from_date ?>&to_date=<?= $to_date ?>"><?= $i ?></a>
                             </li>
                         <?php endfor; ?>
                         <li class="page-item <?= $page_today_sales >= $total_pages_today ? 'disabled' : '' ?>">
@@ -380,8 +416,22 @@ require '../includes/header.php';
                     </ul>
                 </nav>
             <?php else: ?>
-                <div class="alert alert-info">No sales recorded for today.</div>
+                <?php
+                if ($from_date || $to_date) {
+                    if ($from_date && $to_date) {
+                        $msg = "No sales recorded between " . date('M d, Y', strtotime($from_date)) . " and " . date('M d, Y', strtotime($to_date)) . ".";
+                    } elseif ($from_date) {
+                        $msg = "No sales recorded from " . date('M d, Y', strtotime($from_date)) . ".";
+                    } else {
+                        $msg = "No sales recorded up to " . date('M d, Y', strtotime($to_date)) . ".";
+                    }
+                } else {
+                    $msg = "No sales recorded for today.";
+                }
+                ?>
+                <div class="alert alert-info"><?= $msg ?></div>
             <?php endif; ?>
+
         </div>
     </div>
 <?php endif; ?>
@@ -398,43 +448,43 @@ require '../includes/header.php';
                 <thead>
                     <tr>
                         <!-- <th>ID</th> -->
-                        <!-- <th>Phone</th>
+<!-- <th>Phone</th>
                         <th>Customer</th>
                         <th>Amount</th>
                         <th>Date</th>
                     </tr> -->
-                <!-- </thead>
+<!-- </thead>
                 <tbody>
                     <?php while ($sale = $recent_sales->fetch_assoc()): ?>
                         <tr> -->
-                             <!-- <td><?= $sale['id'] ?></td>
+<!-- <td><?= $sale['id'] ?></td>
                             <td><?= $sale['brand'] ?>     <?= $sale['model'] ?></td>
                             <td><?= $sale['customer_name'] ?></td>
                             <td>UGX <?= number_format($sale['sale_price']) ?></td> -->
-                            <!-- <td><?= date('M d, Y', strtotime($sale['sale_date'])) ?></td>
+<!-- <td><?= date('M d, Y', strtotime($sale['sale_date'])) ?></td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody> -->
-            <!-- </table>
+<!-- </table>
         </div> -->
 
-        <!-- Pagination Controls for Recent Sales -->
-        <!-- <nav aria-label="Page navigation">
+<!-- Pagination Controls for Recent Sales -->
+<!-- <nav aria-label="Page navigation">
             <ul class="pagination">
                 <li class="page-item <?= $page_recent <= 1 ? 'disabled' : '' ?>">
                     <a class="page-link" href="?page_recent=<?= $page_recent - 1 ?>">Previous</a>
                 </li> -->
-                <!-- <?php for ($i = 1; $i <= $total_pages_recent; $i++): ?>
+<!-- <?php for ($i = 1; $i <= $total_pages_recent; $i++): ?>
                     <li class="page-item <?= $i === $page_recent ? 'active' : '' ?>">
                         <a class="page-link" href="?page_recent=<?= $i ?>"><?= $i ?></a>
                     </li>
                 <?php endfor; ?> -->
-                <!-- <li class="page-item <?= $page_recent >= $total_pages_recent ? 'disabled' : '' ?>">
+<!-- <li class="page-item <?= $page_recent >= $total_pages_recent ? 'disabled' : '' ?>">
                     <a class="page-link" href="?page_recent=<?= $page_recent + 1 ?>">Next</a>
                 </li>
             </ul>
         </nav> -->
-    <!-- </div>
+<!-- </div>
 </div>  -->
 
 <?php require '../includes/footer.php'; ?>
