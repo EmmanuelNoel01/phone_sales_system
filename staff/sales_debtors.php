@@ -12,7 +12,7 @@ $page_title = "Sales Debtors";
 // Pagination variables
 $limit = 10; 
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$page = max($page, 1); // Ensure page is at least 1
+$page = max($page, 1); 
 $offset = ($page - 1) * $limit;
 
 // Clear debt action
@@ -31,7 +31,7 @@ if (isset($_POST['clear_debt'])) {
         $_SESSION['notification'] = "Your request to clear the debt has been submitted for approval.";
     }
     
-    header("Location: " . $_SERVER['PHP_SELF'] . "?page=$page"); // Redirect to the same page
+    header("Location: " . $_SERVER['PHP_SELF'] . "?page=$page"); 
     exit; // Stop further execution
 }
 
@@ -46,7 +46,7 @@ $sales = $conn->query("
     FROM sales s
     LEFT JOIN users u ON s.sold_by = u.id
     LEFT JOIN phones p ON s.phone_id = p.id
-    WHERE s.balance_due > 0
+    WHERE s.balance_due > 0 and approval_status != 'Rejected'
     ORDER BY s.sale_date DESC
     LIMIT $limit OFFSET $offset
 ");

@@ -42,20 +42,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login | Gadget Store</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .card {
-            border-radius: 10px;
-            background-color: #03246b; 
-            color: white;
-        }
-        .form-control:focus { box-shadow: none; border-color: #80bdff; }
-        .login-logo {
-            display: block;
-            margin: 20px auto;
-            width: 150px;
-            height: auto;
-            border-radius: 10px;
-        }
+        body {
+        background-image: url('/phone_sales_system/assets/img/bg.jpg'); 
+        background-size: cover; 
+        background-position: center;
+        background-repeat: no-repeat; 
+        color: white;
+        height: 100vh;
+        margin: 0;
+    }
+    .card {
+        border-radius: 10px;
+        background-color: rgba(3, 36, 107, 0.8); 
+    }
+    .form-control:focus { box-shadow: none; border-color: #80bdff; }
+    .login-logo {
+        display: block;
+        margin: 20px auto;
+        width: 150px;
+        height: auto;
+        border-radius: 10px;
+    }
+
     </style>
 </head>
 <body>
@@ -66,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img src="/phone_sales_system/assets/img/logo.jpg" alt="Gadget Store Logo" class="login-logo">
 
                     <div class="card-body p-4">
-                        <h2 class="text-center mb-4">LogIn</h2>
+                        <h2 class="text-center mb-4 text-white">LogIn</h2>
 
                         <?php if ($error): ?>
                             <div class="alert alert-danger">
@@ -76,12 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <form method="POST" novalidate>
                             <div class="mb-3">
-                                <label class="form-label">Email Address</label>
+                                <label class="form-label text-white">Email Address</label>
                                 <input type="email" name="email" class="form-control" required>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label">Password</label>
+                                <label class="form-label text-white">Password</label>
                                 <input type="password" name="password" class="form-control" required>
                             </div>
 

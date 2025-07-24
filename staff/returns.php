@@ -1,16 +1,18 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require '../includes/config.php';
 require '../includes/auth.php';
 
 $page_title = "Process Returns";
 
-// --- Handle filter inputs ---
 $filter_customer = isset($_GET['customer']) ? $conn->real_escape_string($_GET['customer']) : '';
 $filter_date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
 $filter_date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 
-// Build sales query with filters
-$sales_sql = "SELECT id, customer_name, phone_id FROM sales WHERE 1=1";
+$sales_sql = "SELECT id, customer_name, phone_id FROM sales WHERE  approval_status != 'Rejected' AND approval_status != 'approved'";
 
 if ($filter_customer !== '') {
     $sales_sql .= " AND customer_name LIKE '%$filter_customer%'";
@@ -28,11 +30,10 @@ $sales_sql .= " ORDER BY id DESC";
 
 $sales = $conn->query($sales_sql);
 
-// --- Handle form submission for return ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sale_id = (int)$_POST['sale_id'];
     $reason = $conn->real_escape_string($_POST['reason']);
-    $status = 'Returned'; // default status
+    $status = 'Returned';
     $returned_by = $conn->real_escape_string($_POST['returned_by']);
     $processed_by = $_SESSION['user_id'];
 
@@ -45,12 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 VALUES ($sale_id, $phone_id, '$reason', '$status', $processed_by, NOW())");
 
         if ($insert) {
-            $update = $conn->query("UPDATE phones SET status = 'Returned' WHERE id = $phone_id");
+            $updatePhone = $conn->query("UPDATE phones SET status = 'Available', quantity = quantity + 1 WHERE id = $phone_id");
 
-            if ($update) {
+            $updateSale = $conn->query("UPDATE sales SET approval_status = 'Rejected', amount_paid = 0 WHERE id = $sale_id");
+
+            if ($updatePhone && $updateSale) {
                 $_SESSION['success'] = "Return processed successfully!";
             } else {
-                $_SESSION['error'] = "Return recorded, but failed to update phone status.";
+                $_SESSION['error'] = "Return recorded, but failed to update phone status or sale status.";
             }
         } else {
             $_SESSION['error'] = "Failed to record return.";
@@ -59,18 +62,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['error'] = "Invalid sale selected.";
     }
 
-    // Redirect to avoid form resubmission
     header("Location: returns.php");
     exit();
 }
 
-// Load returned phones for table
+$limit = 10;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+$total_result = $conn->query("SELECT COUNT(*) AS total FROM returns WHERE status = 'Returned'");
+$total_rows = $total_result->fetch_assoc()['total'];
+$total_pages = ceil($total_rows / $limit);
+
 $returns = $conn->query("
     SELECT r.*, p.brand, p.model, s.customer_name 
     FROM returns r
     JOIN phones p ON r.phone_id = p.id
     JOIN sales s ON r.sale_id = s.id
     WHERE r.status = 'Returned'
+    LIMIT $limit OFFSET $offset
 ");
 ?>
 
@@ -79,9 +89,11 @@ $returns = $conn->query("
 <div class="row">
     <div class="col-md-6">
         <?php if (!empty($_SESSION['success'])): ?>
-            <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
+            <div class="alert alert-success"><?= $_SESSION['success'];
+                                                unset($_SESSION['success']); ?></div>
         <?php elseif (!empty($_SESSION['error'])): ?>
-            <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+            <div class="alert alert-danger"><?= $_SESSION['error'];
+                                            unset($_SESSION['error']); ?></div>
         <?php endif; ?>
 
         <div class="card shadow mb-4">
@@ -111,18 +123,24 @@ $returns = $conn->query("
 
                 <!-- Return processing form -->
                 <form method="POST" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label class="form-label">Select Sale</label>
-                        <select name="sale_id" class="form-select" required>
-                            <option value="">-- Select Sale --</option>
-                            <?php while($sale = $sales->fetch_assoc()): ?>
-                                <option value="<?= $sale['id'] ?>">
-                                    Sale #<?= $sale['id'] ?> - <?= htmlspecialchars($sale['customer_name']) ?> (Phone ID: <?= $sale['phone_id'] ?>)
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
-                        <div class="invalid-feedback">Please select a sale</div>
-                    </div>
+                <div class="mb-3">
+    <label class="form-label">Select Sale</label>
+    <div class="custom-dropdown">
+        <div class="selected-option" id="selected-sale"> Select Sale </div>
+        <div class="dropdown-options" id="dropdown-options" style="display: none;">
+            <!-- <div class="option" data-value="">
+                -- Select Sale --
+            </div> -->
+            <?php while($sale = $sales->fetch_assoc()): ?>
+                <div class="option" data-value="<?= $sale['id'] ?>">
+                    Sale #<?= $sale['id'] ?> - <?= htmlspecialchars($sale['customer_name']) ?> (Phone ID: <?= $sale['phone_id'] ?>)
+                </div>
+            <?php endwhile; ?>
+        </div>
+    </div>
+    <input type="hidden" name="sale_id" id="sale-id">
+    <div class="invalid-feedback">Please select a sale</div>
+</div>
 
                     <div class="mb-3">
                         <label class="form-label">Who Returned It?</label>
@@ -161,22 +179,100 @@ $returns = $conn->query("
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while($return = $returns->fetch_assoc()): ?>
-                            <tr>
-                                <td><?= $return['id'] ?></td>
-                                <td><?= $return['brand'] ?> <?= $return['model'] ?></td>
-                                <td><?= $return['customer_name'] ?></td>
-                                <td>
-                                    <span class="badge bg-warning text-dark"><?= $return['status'] ?></span>
-                                </td>
-                            </tr>
+                            <?php while ($return = $returns->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= $return['id'] ?></td>
+                                    <td><?= $return['brand'] ?> <?= $return['model'] ?></td>
+                                    <td><?= $return['customer_name'] ?></td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark"><?= $return['status'] ?></span>
+                                    </td>
+                                </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        <?php if ($page > 1): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<?= $page - 1 ?>&customer=<?= urlencode($filter_customer) ?>&date_from=<?= $filter_date_from ?>&date_to=<?= $filter_date_to ?>">Previous</a>
+                            </li>
+                        <?php endif; ?>
+
+                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                            <li class="page-item <?= ($i === $page) ? 'active' : '' ?>">
+                                <a class="page-link" href="?page=<?= $i ?>&customer=<?= urlencode($filter_customer) ?>&date_from=<?= $filter_date_from ?>&date_to=<?= $filter_date_to ?>"><?= $i ?></a>
+                            </li>
+                        <?php endfor; ?>
+
+                        <?php if ($page < $total_pages): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<?= $page + 1 ?>&customer=<?= urlencode($filter_customer) ?>&date_from=<?= $filter_date_from ?>&date_to=<?= $filter_date_to ?>">Next</a>
+                            </li>
+                        <?php endif; ?>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
 </div>
 
 <?php require '../includes/footer.php'; ?>
+
+<style>
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+}
+.selected-option {
+    padding: 10px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #fff;
+}
+.dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #fff;
+    z-index: 1000;
+}
+.option {
+    padding: 10px;
+    cursor: pointer;
+}
+.option:hover {
+    background-color: #f0f0f0;
+}
+</style>
+
+<script>
+document.getElementById('selected-sale').addEventListener('click', function() {
+    const dropdown = document.getElementById('dropdown-options');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+});
+
+document.querySelectorAll('.option').forEach(option => {
+    option.addEventListener('click', function() {
+        const selectedValue = this.getAttribute('data-value');
+        document.getElementById('selected-sale').textContent = this.textContent;
+        document.getElementById('sale-id').value = selectedValue;
+        document.getElementById('dropdown-options').style.display = 'none';
+    });
+});
+
+// Close dropdown if clicked outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.querySelector('.custom-dropdown');
+    if (!dropdown.contains(event.target)) {
+        document.getElementById('dropdown-options').style.display = 'none';
+    }
+});
+</script>

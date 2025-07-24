@@ -1,4 +1,9 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require '../includes/config.php';
 require '../includes/auth.php';
 
@@ -8,7 +13,7 @@ $page_title = "Admin Dashboard";
 $stats = $conn->query("
     SELECT 
         (SELECT COUNT(*) FROM phones WHERE status != 'sold' AND quantity != '0') as phone_count,
-        (SELECT COUNT(*) FROM sales WHERE DATE(sale_date) = CURDATE()) as today_sales,
+        (SELECT COUNT(*) FROM sales WHERE DATE(sale_date) = CURDATE()AND approval_status != 'Rejected') as today_sales,
         (SELECT COUNT(*) FROM returns WHERE status = 'Repairing') as pending_returns,
         (SELECT SUM(sale_price) FROM sales WHERE MONTH(sale_date) = MONTH(CURRENT_DATE())) as monthly_revenue
 ")->fetch_assoc();
