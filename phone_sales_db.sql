@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 23, 2025 at 06:22 PM
+-- Generation Time: Jul 24, 2025 at 09:52 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -98,7 +98,7 @@ CREATE TABLE `phones` (
 --
 
 INSERT INTO `phones` (`id`, `brand`, `model`, `imei`, `storage`, `color`, `condition`, `price`, `quantity`, `added_by`, `added_at`, `status`) VALUES
-(1, 'Apple', 'iPhone 13', '123456789012345', '128GB', 'Blue', 'New', 1150000.00, 39, NULL, '2025-05-07 04:49:05', 'Returned'),
+(1, 'Apple', 'iPhone 13', '123456789012345', '128GB', 'Blue', 'New', 1150000.00, 42, NULL, '2025-05-07 04:49:05', 'Available'),
 (2, 'Samsung', 'Galaxy S22', '234567890123456', '256GB', 'Black', 'New', 3500000.00, 0, NULL, '2025-05-07 04:49:05', 'Available'),
 (3, 'Google', 'Pixel 6', '345678901234567', '128GB', 'White', 'Refurbished', 2800000.00, 0, NULL, '2025-05-07 04:49:05', 'Available');
 
@@ -113,10 +113,29 @@ CREATE TABLE `returns` (
   `sale_id` int(11) DEFAULT NULL,
   `phone_id` int(11) DEFAULT NULL,
   `return_reason` text DEFAULT NULL,
-  `status` enum('Repairing','Swapped','Refunded') DEFAULT NULL,
+  `status` enum('taken','swapped','Returned') DEFAULT NULL,
   `processed_by` int(11) DEFAULT NULL,
   `return_date` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `returns`
+--
+
+INSERT INTO `returns` (`id`, `sale_id`, `phone_id`, `return_reason`, `status`, `processed_by`, `return_date`) VALUES
+(2, 60, 1, 'wasnt taken', 'Returned', 119, '2025-07-24 16:48:17'),
+(3, 61, 1, 'not taken', 'Returned', 119, '2025-07-24 16:52:38'),
+(4, 63, 1, 'yes', 'Returned', 119, '2025-07-24 17:40:56'),
+(5, 63, 1, 'yes', 'Returned', 119, '2025-07-24 17:42:59'),
+(6, 63, 1, 'yes', 'Returned', 119, '2025-07-24 17:45:52'),
+(7, 64, 1, 'yah', 'Returned', 119, '2025-07-24 17:48:49'),
+(8, 66, 1, 'no', 'Returned', 119, '2025-07-24 18:45:01'),
+(9, 65, 1, 'rjeirbge', 'Returned', 119, '2025-07-24 18:46:16'),
+(10, 67, 1, 'fsr', 'Returned', 119, '2025-07-24 18:54:09'),
+(11, 67, 1, 'fsr', 'Returned', 119, '2025-07-24 18:57:34'),
+(12, 67, 1, 'fsr', 'Returned', 119, '2025-07-24 19:00:16'),
+(13, 62, 1, 'cfgd', 'Returned', 119, '2025-07-24 19:35:15'),
+(14, 61, 1, 'jdicjd', 'Returned', 119, '2025-07-24 19:35:48');
 
 -- --------------------------------------------------------
 
@@ -201,7 +220,15 @@ INSERT INTO `sales` (`id`, `phone_id`, `customer_name`, `customer_phone`, `sale_
 (56, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:13:24', 20000.00, 'Pending', 1),
 (57, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:08', 20000.00, 'Pending', 1),
 (58, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:32', 20000.00, 'Pending', 1),
-(59, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:59', 20000.00, 'Pending', 1);
+(59, NULL, 'noel', '0778485512', 20000.00, 119, '2025-07-22 08:15:59', 20000.00, 'Pending', 1),
+(60, 1, 'Omuyiribi', '0778485512', 1150000.00, 119, '2025-07-24 15:58:24', 1050000.00, 'Pending', NULL),
+(61, 1, 'jamilah', '0778485512', 1150000.00, 119, '2025-07-24 16:51:23', 0.00, 'Rejected', NULL),
+(62, 1, 'Martin', '0778485512', 1150000.00, 119, '2025-07-24 17:20:52', 0.00, 'Rejected', NULL),
+(63, 1, 'dan', '0778485512', 1150000.00, 119, '2025-07-24 17:40:32', 0.00, 'Rejected', NULL),
+(64, 1, 'Walk-in Customer', '0778485512', 1150000.00, 119, '2025-07-24 17:48:12', 0.00, 'Rejected', NULL),
+(65, 1, 'example', '0778485512', 1150000.00, 119, '2025-07-24 18:34:52', 0.00, 'Rejected', NULL),
+(66, 1, 'trial', '0778485512', 1150000.00, 119, '2025-07-24 18:35:33', 0.00, 'Rejected', NULL),
+(67, 1, 'phillipo', '0778485512', 1150000.00, 119, '2025-07-24 18:52:42', 0.00, 'Rejected', NULL);
 
 -- --------------------------------------------------------
 
@@ -347,13 +374,13 @@ ALTER TABLE `phones`
 -- AUTO_INCREMENT for table `returns`
 --
 ALTER TABLE `returns`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
 
 --
 -- AUTO_INCREMENT for table `swaps`
