@@ -11,22 +11,28 @@ if (session_status() === PHP_SESSION_NONE)
     <title>Gadget Store | <?= htmlspecialchars($page_title ?? 'Dashboard') ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../assets/css/style.css" rel="stylesheet"> <!-- Optional: Keep your styles -->
+    <link href="../assets/css/style.css" rel="stylesheet">
+    
     <style>
-        body {
+        html, body {
+            height: 100%;
             margin: 0;
-            padding: 0;
+        }
+
+        body {
             display: flex;
-            height: 100vh;
+            flex-direction: row;
             overflow: hidden;
         }
 
         .sidebar {
-            width: 250px;
+            width: 300px;
             background-color: #03246b;
             color: white;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
+            height: 100vh;
         }
 
         .sidebar .logo {
@@ -53,10 +59,13 @@ if (session_status() === PHP_SESSION_NONE)
             display: flex;
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.3s ease;
         }
 
-        .sidebar a:hover {
-            background-color: #021c58;
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: silver;
+            color: #03246b;
         }
 
         .sidebar a i {
@@ -64,9 +73,12 @@ if (session_status() === PHP_SESSION_NONE)
         }
 
         .main-content {
-            flex-grow: 1;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
             background-color: #f8f9fa;
-            overflow-y: auto;
         }
 
         .top-bar {
@@ -76,6 +88,30 @@ if (session_status() === PHP_SESSION_NONE)
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
+        }
+
+        main.container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100px;
+            }
+
+            .sidebar a span {
+                display: none;
+            }
+
+            .sidebar .logo span {
+                display: none;
+            }
+
+            .sidebar .logo img {
+                height: 40px;
+            }
         }
     </style>
 </head>
@@ -90,31 +126,29 @@ if (session_status() === PHP_SESSION_NONE)
         </div>
 
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
-            <a href="/phone_sales_system/admin/dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
-            <a href="/phone_sales_system/admin/add_phone.php"><i class="bi bi-plus-circle"></i> Add Phone</a>
-            <a href="/phone_sales_system/admin/manage_users.php"><i class="bi bi-people"></i> Manage Staff</a>
-            <a href="/phone_sales_system/admin/manage_inventory.php"><i class="bi bi-pencil"></i> Edit Inventory</a>
-            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i>Sell Phones</a>
-            <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i>Sell other Gadgets</a>
-            <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> Returns</a>
-            <a href="/phone_sales_system/staff/swaps.php"><i class="bi bi-arrow-left-right"></i> Swaps(Top-Up)</a>
-            <a href="/phone_sales_system/staff/swaps_debtors.php"><i class="bi bi-exclamation-circle"></i> Swap Debtors</a>
-            <a href="/phone_sales_system/staff/sales_debtors.php"><i class="bi bi-exclamation-triangle"></i> Sales Debtors</a>
-            <a href="/phone_sales_system/expenditures.php"><i class="bi bi-cash-stack"></i> Expenditure</a>
+            <a href="/phone_sales_system/admin/dashboard.php"><i class="bi bi-speedometer2"></i> <span>Dashboard</span></a>
+            <a href="/phone_sales_system/admin/add_phone.php"><i class="bi bi-plus-circle"></i> <span>Add Phone</span></a>
+            <a href="/phone_sales_system/admin/manage_users.php"><i class="bi bi-people"></i> <span>Manage Staff</span></a>
+            <a href="/phone_sales_system/admin/manage_inventory.php"><i class="bi bi-pencil"></i> <span>Edit Inventory</span></a>
+            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i> <span>Sell Phones</span></a>
+            <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i> <span>Sell Gadgets</span></a>
+            <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> <span>Returns</span></a>
+            <a href="/phone_sales_system/staff/swaps.php"><i class="bi bi-arrow-left-right"></i> <span>Swaps</span></a>
+            <a href="/phone_sales_system/staff/swaps_debtors.php"><i class="bi bi-exclamation-circle"></i> <span>Swap Debtors</span></a>
+            <a href="/phone_sales_system/staff/sales_debtors.php"><i class="bi bi-exclamation-triangle"></i> <span>Sales Debtors</span></a>
+            <a href="/phone_sales_system/expenditures.php"><i class="bi bi-cash-stack"></i> <span>Expenditure</span></a>
         <?php else: ?>
-            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i>Sell Phones</a>
-            <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i>Sell other Gadgets</a>
-            <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> Returns</a>
-            <a href="/phone_sales_system/staff/swaps.php"><i class="bi bi-arrow-left-right"></i> Swaps(Top-Up)</a>
-            <a href="/phone_sales_system/staff/swaps_debtors.php"><i class="bi bi-exclamation-circle"></i> Swap Debtors</a>
-            <a href="/phone_sales_system/staff/sales_debtors.php"><i class="bi bi-exclamation-triangle"></i> Sales Debtors</a>
-            <a href="/phone_sales_system/expenditures.php"><i class="bi bi-cash-stack"></i> Expenditure</a>
+            <a href="/phone_sales_system/staff/sales.php"><i class="bi bi-cash-stack"></i> <span>Sell Phones</span></a>
+            <a href="/phone_sales_system/sell_gadget.php"><i class="bi bi-receipt"></i> <span>Sell Gadgets</span></a>
+            <a href="/phone_sales_system/staff/returns.php"><i class="bi bi-arrow-return-left"></i> <span>Returns</span></a>
+            <a href="/phone_sales_system/staff/swaps.php"><i class="bi bi-arrow-left-right"></i> <span>Swaps</span></a>
+            <a href="/phone_sales_system/staff/swaps_debtors.php"><i class="bi bi-exclamation-circle"></i> <span>Swap Debtors</span></a>
+            <a href="/phone_sales_system/staff/sales_debtors.php"><i class="bi bi-exclamation-triangle"></i> <span>Sales Debtors</span></a>
+            <a href="/phone_sales_system/expenditures.php"><i class="bi bi-cash-stack"></i> <span>Expenditure</span></a>
         <?php endif; ?>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Top bar -->
         <div class="top-bar">
             <div>
                 <i class="bi bi-person-circle me-2"></i>
@@ -125,5 +159,4 @@ if (session_status() === PHP_SESSION_NONE)
             </a>
         </div>
 
-        <!-- Page Content Starts -->
         <main class="container mt-4">

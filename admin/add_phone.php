@@ -154,6 +154,7 @@ require '../includes/header.php';
                         <option value="128GB">128GB</option>
                         <option value="256GB">256GB</option>
                         <option value="512GB">512GB</option>
+                        <option value="512GB">1TB</option>
                     </select>
                     <div class="invalid-feedback">Please select storage</div>
                 </div>

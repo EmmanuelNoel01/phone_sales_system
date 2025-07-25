@@ -23,12 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_expenditure'])) {
     }
 }
 
-// Pagination setup
 $limit = 10;
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
-// Filters
 $where = "";
 $params = [];
 $param_types = "";
@@ -74,26 +72,25 @@ $result = $data_stmt->get_result();
 
 <div class="container-fluid mt-4">
     <?php if (isset($_SESSION['message'])): ?>
-        <div class="alert alert-success"><?= $_SESSION['message'];
-        unset($_SESSION['message']); ?></div>
+        <div class="alert alert-success"><?= $_SESSION['message']; unset($_SESSION['message']); ?></div>
     <?php endif; ?>
 
     <!-- Add Expenditure Form -->
-    <form method="post" class="row g-3 mb-4" id="expenditure-form">
-        <div class="col-md-2">
+    <form method="post" class="row g-3 mb-4 d-flex flex-wrap" id="expenditure-form">
+        <div class="col-md-2 flex-fill">
             <input type="text" name="title" class="form-control" placeholder="Spent" required>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-1 flex-fill">
             <input type="number" name="quantity" id="quantity" class="form-control" placeholder="Quantity" min="1">
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 flex-fill">
             <input type="number" name="unit_price" id="unit_price" class="form-control" placeholder="Amount" required>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 flex-fill">
             <input type="text" id="amount" class="form-control" placeholder="Total Amount (UGX)" readonly required>
             <input type="hidden" name="amount" id="hidden_amount">
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 flex-fill">
             <select name="category" class="form-control" required>
                 <option value="">Select Category</option>
                 <option value="Food">Food</option>
@@ -102,10 +99,10 @@ $result = $data_stmt->get_result();
                 <option value="Other">Other</option>
             </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 flex-fill">
             <input type="text" name="description" class="form-control" placeholder="Description">
         </div>
-        <div class="col-md-1">
+        <div class="col-md-1 flex-fill">
             <button type="submit" name="add_expenditure" class="btn btn-primary w-100">Add</button>
         </div>
     </form>
@@ -114,8 +111,7 @@ $result = $data_stmt->get_result();
     <form method="get" class="row g-2 align-items-end mb-4">
         <div class="col-md-3">
             <label for="from_date" class="form-label mb-1">From Date</label>
-            <input type="date" name="from_date" id="from_date" class="form-control"
-                value="<?= htmlspecialchars($from) ?>">
+            <input type="date" name="from_date" id="from_date" class="form-control" value="<?= htmlspecialchars($from) ?>">
         </div>
         <div class="col-md-3">
             <label for="to_date" class="form-label mb-1">To Date</label>
